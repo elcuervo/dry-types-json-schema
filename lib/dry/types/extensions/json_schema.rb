@@ -15,16 +15,21 @@ module Dry
         NilClass:   { type: :null }
       }.freeze
 
-      def initialize
+      def initialize(root: false)
         @keys = EMPTY_HASH.dup
+        @root = root
       end
+
+      def root? = @root
 
       def call(ast)
         visit(ast)
       end
 
       def to_hash
-        @keys.to_hash
+        result = @keys.to_hash
+        result[:$schema] = "http://json-schema.org/draft-06/schema#" if root?
+        result
       end
 
       def visit(node, opts = EMPTY_HASH)
@@ -64,12 +69,24 @@ module Dry
       def visit_sum(node, opts = EMPTY_HASH)
         *types, meta = node
 
-        types.map { |type| visit(type, opts) }
+        # FIXME
+        result = types.map do |type|
+          self.class.new
+            .tap { |target| target.visit(type) }
+            .to_hash
+            .values
+            .first
+        end.uniq
+
+        return @keys[opts[:key]] = result.first if result.count == 1
+
+        @keys[opts[:key]] = { anyOf: result }
       end
 
       def visit_hash(node, opts = EMPTY_HASH)
-        binding.pry
-        @keys.merge!({ type: :object, properties: {} })
+        part, meta = node
+
+        @keys[opts[:key]] = { type: :object }
       end
 
       def visit_schema(node, opts = EMPTY_HASH)
@@ -92,8 +109,8 @@ module Dry
     end
 
     module Builder
-      def json_schema
-        compiler = JSONSchema.new
+      def json_schema(root: false)
+        compiler = JSONSchema.new(root: root)
         compiler.call(to_ast)
         compiler.to_hash
       end
