@@ -16,7 +16,7 @@ class Minitest::Spec
 
       describe "conforms the schema definition" do
         it { assert_equal type.json_schema, definition }
-        it { JSONSchemer.validate_schema(type.json_schema.to_json) }
+        it { assert JSONSchemer.schema(type.json_schema.to_json).valid_schema? }
       end
     end
   end
