@@ -80,13 +80,24 @@ module Dry
 
         return @keys[opts[:key]] = result.first if result.count == 1
 
-        @keys[opts[:key]] = { anyOf: result }
+        return @keys[opts[:key]] = { anyOf: result } unless opts[:array]
+
+        @keys[opts[:key]] = {
+          type: :array,
+          items: { anyOf: result }
+        }
       end
 
       def visit_hash(node, opts = EMPTY_HASH)
         part, meta = node
 
         @keys[opts[:key]] = { type: :object }
+      end
+
+      def visit_array(node, opts = EMPTY_HASH)
+        type, meta = node
+
+        visit(type, opts.merge(array: true))
       end
 
       def visit_schema(node, opts = EMPTY_HASH)

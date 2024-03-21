@@ -35,7 +35,8 @@ describe Dry::Types::JSONSchema do
 
   describe "struct" do
     class StructTest < Dry::Struct
-      attribute :a, Types::String | Types::Hash
+      attribute :data, Types::String | Types::Hash
+      attribute :list, Types::Array.of(Types::String | Types::Hash)
     end
 
     let(:type) { StructTest.schema }
@@ -44,11 +45,20 @@ describe Dry::Types::JSONSchema do
       {
         type: :object,
         properties: {
-          a: {
+          data: {
             anyOf: [
               { type: :string },
               { type: :object }
             ]
+          },
+          list: {
+            type: :array,
+            items: {
+              anyOf: [
+                { type: :string },
+                { type: :object }
+              ]
+            }
           }
         }
       }
