@@ -8,8 +8,10 @@ module Dry
       TO_INTEGER = ->(v, _) { v.to_i }.freeze
 
       PREDICATE_TO_TYPE = {
-        String: { type: :string },
-        Hash: { type: :object, properties: {} }
+        String:     { type: :string },
+        Integer:    { type: :integer },
+        TrueClass:  { type: :boolean },
+        FalseClass: { type: :boolean }
       }.freeze
 
       def initialize
@@ -17,7 +19,6 @@ module Dry
       end
 
       def call(ast)
-        binding.pry
         visit(ast)
       end
 
@@ -44,6 +45,9 @@ module Dry
 
         if name == :type?
           definition = PREDICATE_TO_TYPE[type.to_s.to_sym]
+
+          return unless definition
+
           ctx = opts[:key]
 
           @keys[ctx] = definition
@@ -51,13 +55,20 @@ module Dry
       end
 
       def visit_hash(node, opts = EMPTY_HASH)
+        binding.pry
         @keys.merge!({ type: :object, properties: {} })
       end
 
       def visit_schema(node, opts = EMPTY_HASH)
         keys, options, meta = node
 
-        keys.each { |fragment| visit(fragment, opts) }
+        target = self.class.new
+
+        keys.each { |fragment| target.visit(fragment, opts) }
+
+        definition = { type: :object, properties: target.to_hash }
+
+        @keys.merge!(definition)
       end
 
       def visit_key(node, opts = EMPTY_HASH)
