@@ -3,9 +3,22 @@
 require "spec_helper"
 
 describe Dry::Types::JSONSchema do
-  let(:type) { Dry::Types["strict.string"] }
+  describe "simple types" do
+    let(:type) { Dry::Types["hash"].schema(name: Dry::Types["string"]) }
 
-  it do
-    type.json_schema
+    let(:definition) do
+      {
+        type: :object,
+        properties: {
+          name: {
+            type: "string"
+          }
+        }
+      }
+    end
+
+    it do
+      assert_equal type.json_schema, definition
+    end
   end
 end

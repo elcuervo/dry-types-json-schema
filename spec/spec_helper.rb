@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+
+require "dry/struct"
 require "dry/types"
 require "dry/types/extensions"
 

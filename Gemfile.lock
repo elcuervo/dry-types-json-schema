@@ -18,6 +18,11 @@ GEM
       concurrent-ruby (~> 1.0)
       dry-core (~> 1.0, < 2)
       zeitwerk (~> 2.6)
+    dry-struct (1.6.0)
+      dry-core (~> 1.0, < 2)
+      dry-types (>= 1.7, < 2)
+      ice_nine (~> 0.11)
+      zeitwerk (~> 2.6)
     dry-types (1.7.2)
       bigdecimal (~> 3.0)
       concurrent-ruby (~> 1.0)
@@ -25,6 +30,7 @@ GEM
       dry-inflector (~> 1.0)
       dry-logic (~> 1.4)
       zeitwerk (~> 2.6)
+    ice_nine (0.11.2)
     method_source (1.0.0)
     minitest (5.22.3)
     pry (0.14.2)
@@ -37,6 +43,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  dry-struct (~> 1.6.0)
   dry-types-json-schema!
   minitest (~> 5.22.3)
   pry (~> 0.14.2)
