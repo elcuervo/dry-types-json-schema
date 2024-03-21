@@ -18,19 +18,19 @@ describe Dry::Types::JSONSchema do
         )
     end
 
-    let(:definition) do
-      {
-        type: :object,
-        properties: {
-          name: { type: :string },
-          age: { type: :integer },
-          active: { type: :boolean },
-          migrated: { type: :null }
+    it_conforms_definition do
+      let(:definition) do
+        {
+          type: :object,
+          properties: {
+            name: { type: :string },
+            age: { type: :integer },
+            active: { type: :boolean },
+            migrated: { type: :null }
+          }
         }
-      }
+      end
     end
-
-    it { assert_equal type.json_schema, definition }
   end
 
   describe "struct" do
@@ -64,6 +64,6 @@ describe Dry::Types::JSONSchema do
       }
     end
 
-    it { assert_equal type.json_schema, definition }
+    it_conforms_definition
   end
 end

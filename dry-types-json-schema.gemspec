@@ -16,4 +16,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency("dry-struct", "~> 1.6.0")
   s.add_development_dependency("minitest", "~> 5.22.3")
   s.add_development_dependency("pry", "~> 0.14.2")
+  s.add_development_dependency("json_schemer", "~> 2.2.1")
 end
