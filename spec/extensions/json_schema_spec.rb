@@ -37,8 +37,9 @@ describe Dry::Types::JSONSchema do
 
   describe "struct" do
     class StructTest < Dry::Struct
-      attribute :data, Types::String | Types::Hash
-      attribute :list, Types::Array.of(Types::String | Types::Hash)
+      attribute :data,   Types::String | Types::Hash
+      attribute :list,   Types::Array.of(Types::String | Types::Hash)
+      attribute :string, Types::String.constrained(min_size: 1, max_size: 255)
     end
 
     let(:type) { StructTest.schema }
@@ -61,6 +62,11 @@ describe Dry::Types::JSONSchema do
                 { type: :object }
               ]
             }
+          },
+          string: {
+            type: :string,
+            minLength: 1,
+            maxLength: 255
           }
         }
       }

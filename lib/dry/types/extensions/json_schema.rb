@@ -6,14 +6,23 @@ module Dry
       EMPTY_HASH = {}.freeze
       IDENTITY = ->(v, _) { v }.freeze
       TO_INTEGER = ->(v, _) { v.to_i }.freeze
+      TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
+
+      CLASS_TO_TYPE = {
+        String:     :string,
+        Integer:    :integer,
+        TrueClass:  :boolean,
+        FalseClass: :boolean,
+        NilClass:   :null,
+        BigDecimal: :number,
+        Hash:       :object,
+        Array:      :array,
+      }.freeze
 
       PREDICATE_TO_TYPE = {
-        String:     { type: :string },
-        Integer:    { type: :integer },
-        TrueClass:  { type: :boolean },
-        FalseClass: { type: :boolean },
-        NilClass:   { type: :null },
-        BigDecimal: { type: :number },
+        min_size?: { minLength: TO_INTEGER },
+        max_size?: { maxLength: TO_INTEGER },
+        type?:     { type: TO_TYPE }
       }.freeze
 
       def initialize(root: false)
@@ -54,17 +63,24 @@ module Dry
       end
 
       def visit_predicate(node, opts = EMPTY_HASH)
-        name, ((_, type), input) = node
+        head, tail = node
+        (_, type), = tail
 
-        if name == :type?
-          definition = PREDICATE_TO_TYPE[type.to_s.to_sym]
+        ctx = opts[:key]
 
-          return unless definition
+        definition = PREDICATE_TO_TYPE.fetch(head) do
+          raise "unsupported #{head}"
 
-          ctx = opts[:key]
+          EMPTY_HASH
+        end.dup
 
-          @keys[ctx] = definition
-        end
+        definition
+          .transform_values! { |v| v.call(type, ctx) }
+
+        return unless definition.any? && ctx
+
+        @keys[ctx] ||= {}
+        @keys[ctx].merge!(definition)
       end
 
       def visit_sum(node, opts = EMPTY_HASH)
@@ -73,7 +89,7 @@ module Dry
         # FIXME
         result = types.map do |type|
           self.class.new
-            .tap { |target| target.visit(type) }
+            .tap { |target| target.visit(type, opts) }
             .to_hash
             .values
             .first
@@ -87,6 +103,13 @@ module Dry
           type: :array,
           items: { anyOf: result }
         }
+      end
+
+      def visit_and(node, opts = EMPTY_HASH)
+        left, right = node
+
+        visit(left, opts)
+        visit(right, opts)
       end
 
       def visit_hash(node, opts = EMPTY_HASH)
