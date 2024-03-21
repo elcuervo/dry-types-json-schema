@@ -3,13 +3,18 @@
 require "spec_helper"
 
 describe Dry::Types::JSONSchema do
-  describe "simple types" do
+  module Types
+    include Dry.Types()
+  end
+
+  describe "hash" do
     let(:type) do
       Dry::Types["hash"]
         .schema(
           name: Dry::Types["string"],
           age: Dry::Types["integer"],
-          active: Dry::Types["bool"]
+          active: Dry::Types["bool"],
+          migrated: Dry::Types["nil"]
         )
     end
 
@@ -19,13 +24,31 @@ describe Dry::Types::JSONSchema do
         properties: {
           name: { type: :string },
           age: { type: :integer },
-          active: { type: :boolean }
+          active: { type: :boolean },
+          migrated: { type: :null }
         }
       }
     end
 
-    it do
-      assert_equal type.json_schema, definition
+    it { assert_equal type.json_schema, definition }
+  end
+
+  describe "struct" do
+    class StructTest < Dry::Struct
+      attribute :a, Types::String
     end
+
+    let(:type) { StructTest.schema }
+
+    let(:definition) do
+      {
+        type: :object,
+        properties: {
+          a: { type: :string }
+        }
+      }
+    end
+
+    it { assert_equal type.json_schema, definition }
   end
 end

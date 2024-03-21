@@ -11,7 +11,8 @@ module Dry
         String:     { type: :string },
         Integer:    { type: :integer },
         TrueClass:  { type: :boolean },
-        FalseClass: { type: :boolean }
+        FalseClass: { type: :boolean },
+        NilClass:   { type: :null }
       }.freeze
 
       def initialize
@@ -33,6 +34,12 @@ module Dry
 
       def visit_constrained(node, opts = EMPTY_HASH)
         node.each { |it| visit(it, opts) }
+      end
+
+      def visit_constructor(node, opts = EMPTY_HASH)
+        type, _ = node
+
+        visit(type, opts)
       end
 
       def visit_nominal(node, opts = EMPTY_HASH)
