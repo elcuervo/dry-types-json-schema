@@ -8,6 +8,11 @@ module Dry
       TO_INTEGER = ->(v, _) { v.to_i }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
+      ARRAY_PREDICATE_OVERRIDE = {
+        min_size?: :min_items?,
+        max_size?: :max_items?,
+      }.freeze
+
       CLASS_TO_TYPE = {
         String:     :string,
         Integer:    :integer,
@@ -20,14 +25,16 @@ module Dry
       }.freeze
 
       PREDICATE_TO_TYPE = {
-        type?:     { type: TO_TYPE },
-        min_size?: { minLength: TO_INTEGER },
-        max_size?: { maxLength: TO_INTEGER },
-        min?:      { maxLength: TO_INTEGER },
-        gt?:       { exclusiveMinimum: IDENTITY },
-        gteq?:     { minimum: IDENTITY },
-        lt?:       { exclusiveMaximum: IDENTITY },
-        lteq?:     { maximum: IDENTITY },
+        type?:      { type: TO_TYPE },
+        min_size?:  { minLength: TO_INTEGER },
+        min_items?: { minItems: TO_INTEGER },
+        max_size?:  { maxLength: TO_INTEGER },
+        max_items?: { maxItems: TO_INTEGER },
+        min?:       { maxLength: TO_INTEGER },
+        gt?:        { exclusiveMinimum: IDENTITY },
+        gteq?:      { minimum: IDENTITY },
+        lt?:        { exclusiveMaximum: IDENTITY },
+        lteq?:      { maximum: IDENTITY },
       }.freeze
 
       def initialize(root: false)
@@ -72,6 +79,11 @@ module Dry
         (_, type), = tail
 
         ctx = opts[:key]
+
+        # FIXME
+        if ARRAY_PREDICATE_OVERRIDE.keys.include?(head) && @keys.dig(ctx, :type) == :array
+          head = ARRAY_PREDICATE_OVERRIDE[head]
+        end
 
         definition = PREDICATE_TO_TYPE.fetch(head) do
           raise "unsupported #{head}"

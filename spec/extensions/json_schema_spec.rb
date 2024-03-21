@@ -48,7 +48,6 @@ describe Dry::Types::JSONSchema do
 
     let(:type) { StructTest.schema }
 
-
     it_conforms_definition do
       let(:definition) do
         {
@@ -68,7 +67,7 @@ describe Dry::Types::JSONSchema do
                   { type: :object }
                 ]
               },
-              minLength: 1
+              minItems: 1,
             },
             string: {
               type: :string,
