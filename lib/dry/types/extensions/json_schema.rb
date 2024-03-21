@@ -54,6 +54,12 @@ module Dry
         end
       end
 
+      def visit_sum(node, opts = EMPTY_HASH)
+        *types, meta = node
+
+        types.map { |type| visit(type, opts) }
+      end
+
       def visit_hash(node, opts = EMPTY_HASH)
         binding.pry
         @keys.merge!({ type: :object, properties: {} })
