@@ -20,9 +20,14 @@ module Dry
       }.freeze
 
       PREDICATE_TO_TYPE = {
+        type?:     { type: TO_TYPE },
         min_size?: { minLength: TO_INTEGER },
         max_size?: { maxLength: TO_INTEGER },
-        type?:     { type: TO_TYPE }
+        min?:      { maxLength: TO_INTEGER },
+        gt?:       { exclusiveMinimum: IDENTITY },
+        gteq?:     { minimum: IDENTITY },
+        lt?:       { exclusiveMaximum: IDENTITY },
+        lteq?:     { maximum: IDENTITY },
       }.freeze
 
       def initialize(root: false)

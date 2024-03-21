@@ -12,10 +12,10 @@ describe Dry::Types::JSONSchema do
       Dry::Types["hash"]
         .schema(
           name: Dry::Types["string"],
-          age: Dry::Types["integer"],
+          age: Dry::Types["integer"].constrained(gt: 0, lteq: 99),
           active: Dry::Types["bool"],
           migrated: Dry::Types["nil"],
-          views: Dry::Types["decimal"],
+          views: Dry::Types["decimal"].constrained(gteq: 0, lt: 99_999),
         )
     end
 
@@ -25,10 +25,10 @@ describe Dry::Types::JSONSchema do
           type: :object,
           properties: {
             name: { type: :string },
-            age: { type: :integer },
+            age: { type: :integer, exclusiveMinimum: 0, maximum: 99 },
             active: { type: :boolean },
             migrated: { type: :null },
-            views: { type: :number }
+            views: { type: :number, minimum: 0, exclusiveMaximum: 99_999 }
           }
         }
       end
