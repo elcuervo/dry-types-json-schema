@@ -14,7 +14,8 @@ describe Dry::Types::JSONSchema do
           name: Dry::Types["string"],
           age: Dry::Types["integer"],
           active: Dry::Types["bool"],
-          migrated: Dry::Types["nil"]
+          migrated: Dry::Types["nil"],
+          views: Dry::Types["decimal"],
         )
     end
 
@@ -26,7 +27,8 @@ describe Dry::Types::JSONSchema do
             name: { type: :string },
             age: { type: :integer },
             active: { type: :boolean },
-            migrated: { type: :null }
+            migrated: { type: :null },
+            views: { type: :number }
           }
         }
       end

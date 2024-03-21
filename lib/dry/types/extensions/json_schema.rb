@@ -12,7 +12,8 @@ module Dry
         Integer:    { type: :integer },
         TrueClass:  { type: :boolean },
         FalseClass: { type: :boolean },
-        NilClass:   { type: :null }
+        NilClass:   { type: :null },
+        BigDecimal: { type: :number },
       }.freeze
 
       def initialize(root: false)
