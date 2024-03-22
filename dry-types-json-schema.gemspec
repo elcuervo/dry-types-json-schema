@@ -3,7 +3,7 @@
 Gem::Specification.new do |s|
   s.name              = "dry-types-json-schema"
   s.version           = "0.0.1"
-  s.summary           = ""
+  s.summary           = "Generate JSON Schema from dry-types"
   s.authors           = ["elcuervo"]
   s.licenses          = %w[MIT]
   s.email             = ["elcuervo@elcuervo.net"]
