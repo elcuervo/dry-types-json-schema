@@ -71,13 +71,12 @@ module Dry
         lt?:          { exclusiveMaximum: IDENTITY },
         lteq?:        { maximum: IDENTITY },
         format?:      { format: INSPECT },
-        included_in?: { enum: TO_ARRAY },
+        included_in?: { enum: TO_ARRAY }
       }.freeze
 
       # @return [Set] the set of required keys for the JSON Schema.
       #
       attr_reader :required
-
 
       # Initializes a new instance of the JSONSchema class.
       # @param root [Boolean] whether this schema is the root schema.
@@ -141,10 +140,7 @@ module Dry
         type, meta = node
 
         if opts.fetch(:key, false)
-          if meta.any?
-            @keys[opts[:key]] ||= {}
-            @keys[opts[:key]].merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
-          end
+          visit_nominal_with_key(node, opts)
         else
           @keys.merge!(type: CLASS_TO_TYPE[type.to_s.to_sym])
           @keys.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
@@ -175,22 +171,11 @@ module Dry
         @keys[ctx].merge!(definition)
       end
 
-
-      # FIXME: cleaner way to generate individual types
-      #
-      def single_type(type, opts)
-        self.class.new
-          .tap { |target| target.visit(type, opts) }
-          .to_hash
-          .values
-          .first
-      end
-
       def visit_sum(node, opts = EMPTY_HASH)
         *types, _ = node
 
         result = types
-          .map { |type| single_type(type, opts) }
+          .map { |type| single_type(type, opts.merge(sum: true)) }
           .uniq
 
         return @keys[opts[:key]] = result.first if result.count == 1
@@ -265,6 +250,32 @@ module Dry
 
         visit(rest, opts.merge(key: name))
       end
+
+      private
+
+      # FIXME: cleaner way to generate individual types
+      #
+      def single_type(type, opts)
+        self.class.new
+          .tap { |target| target.visit(type, opts) }
+          .to_hash
+          .values
+          .first
+      end
+
+      def visit_nominal_with_key(node, opts = EMPTY_HASH)
+        type, meta = node
+
+        if opts[:array] && !opts[:sum]
+          @keys[opts[:key]] ||= {}
+          @keys[opts[:key]].merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
+        end
+
+        if meta.any?
+          @keys[opts[:key]] ||= {}
+          @keys[opts[:key]].merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
+        end
+      end
     end
 
     # The `Builder` module provides a method to generate a JSON Schema hash from dry-types definitions.
@@ -274,8 +285,8 @@ module Dry
       #   @param options [Hash] Initialization options passed to `JSONSchema.new`
       #   @return [Hash] The generated JSON Schema as a hash.
       #
-      def json_schema(**)
-        compiler = JSONSchema.new(**)
+      def json_schema(root: false, loose: false)
+        compiler = JSONSchema.new(root: root, loose: loose)
         compiler.call(to_ast)
         compiler.to_hash
       end

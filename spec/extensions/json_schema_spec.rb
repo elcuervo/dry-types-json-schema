@@ -80,6 +80,7 @@ describe Dry::Types::JSONSchema do
       attribute? :epoch,  Types::Time
       attribute? :meta,   Types::String.meta(format: :email)
       attribute? :enum,   Types::String.enum(*%w[draft published archived])
+      attribute? :array,  ArrayOfStrings
       attribute? :nested do
         attribute :deep, Types::Integer
       end
@@ -153,6 +154,12 @@ describe Dry::Types::JSONSchema do
             enum: {
               type: :string,
               enum: %w[draft published archived]
+            },
+
+            array: {
+              type: :array,
+              minItems: 1,
+              items: { type: :string }
             },
 
             nested: {
