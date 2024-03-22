@@ -11,12 +11,12 @@ module Dry
       INSPECT = ->(v, _) { v.inspect }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
-      ANNOTATIONS = %i(title description).freeze
+      ANNOTATIONS = %i[title description].freeze
       ALLOWED_TYPES_META_OVERRIDES = ANNOTATIONS.dup.concat([:format]).freeze
 
       ARRAY_PREDICATE_OVERRIDE = {
         min_size?: :min_items?,
-        max_size?: :max_items?,
+        max_size?: :max_items?
       }.freeze
 
       CLASS_TO_TYPE = {
@@ -31,15 +31,14 @@ module Dry
         Array:      :array,
         Date:       :string,
         DateTime:   :string,
-        Time:       :string,
+        Time:       :string
       }.freeze
 
       EXTRA_PROPS_FOR_TYPE = {
         Date:     { format: :date },
         Time:     { format: :time },
-        DateTime: { format: :"date-time" },
+        DateTime: { format: :"date-time" }
       }.freeze
-
 
       PREDICATE_TO_TYPE = {
         type?:      { type: TO_TYPE },
@@ -57,13 +56,15 @@ module Dry
 
       attr_reader :required
 
-      def initialize(root: false)
+      def initialize(root: false, loose: false)
         @keys = EMPTY_HASH.dup
         @required = Set.new
         @root = root
+        @loose = loose
       end
 
-      def root? = @root
+      def root?  = @root
+      def loose? = @loose
 
       def call(ast)
         visit(ast)
@@ -102,25 +103,22 @@ module Dry
       end
 
       def visit_predicate(node, opts = EMPTY_HASH)
-        head, tail = node
-        (_, type), = tail
-
+        head, ((_, type),) = node
         ctx = opts[:key]
 
         head = ARRAY_PREDICATE_OVERRIDE.fetch(head) if opts[:left_type] == ::Array
 
         definition = PREDICATE_TO_TYPE.fetch(head) do
-          raise UnknownPredicateError, head
+          raise UnknownPredicateError, head unless loose?
 
           EMPTY_HASH
         end.dup
 
-        definition
-          .transform_values! { |v| v.call(type, ctx) }
+        definition.transform_values! { |v| v.call(type, ctx) }
 
         return unless definition.any? && ctx
 
-        if extra = EXTRA_PROPS_FOR_TYPE[type.to_s.to_sym]
+        if (extra = EXTRA_PROPS_FOR_TYPE[type.to_s.to_sym])
           definition = definition.merge(extra)
         end
 
@@ -129,7 +127,7 @@ module Dry
       end
 
       def visit_sum(node, opts = EMPTY_HASH)
-        *types, meta = node
+        *types, _ = node
 
         # FIXME: cleaner way to generate individual types
         #
@@ -155,14 +153,14 @@ module Dry
 
       def visit_and(node, opts = EMPTY_HASH)
         left, right = node
-        (_, (action, ((_, left_type), ))) = left
+        (_, (_, ((_, left_type),))) = left
 
         visit(left, opts)
         visit(right, opts.merge(left_type: left_type))
       end
 
       def visit_hash(node, opts = EMPTY_HASH)
-        part, meta = node
+        _part, _meta = node
 
         @keys[opts[:key]] = { type: :object }
       end
@@ -176,7 +174,7 @@ module Dry
       end
 
       def visit_schema(node, opts = EMPTY_HASH)
-        keys, options, meta = node
+        keys, _, meta = node
 
         target = self.class.new
 

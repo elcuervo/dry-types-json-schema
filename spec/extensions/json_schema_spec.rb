@@ -32,9 +32,9 @@ describe Dry::Types::JSONSchema do
             active: { type: :boolean },
             migrated: { type: :null },
             views: { type: :number, minimum: 0, exclusiveMaximum: 99_999 },
-            created_at: { type: :string, format: :time },
+            created_at: { type: :string, format: :time }
           },
-          required: %i(name age active migrated views created_at)
+          required: %i[name age active migrated views created_at]
         }
       end
     end
@@ -52,7 +52,7 @@ describe Dry::Types::JSONSchema do
       # Validate regexp compatibility during inspect
       #
       EmailType = Types::String
-        .constrained(format: /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i)
+        .constrained(format: /\A[\w+\-.]+@[a-z\d-]+(\.[a-z]+)*\.[a-z]+\z/i)
         .meta(description: "The internally used pattern")
 
       attribute  :data,   Types::String | Types::Hash
@@ -92,7 +92,7 @@ describe Dry::Types::JSONSchema do
                   { type: :object }
                 ]
               },
-              minItems: 1,
+              minItems: 1
             },
 
             string: {
@@ -107,7 +107,7 @@ describe Dry::Types::JSONSchema do
 
             email: {
               type: :string,
-              format: "/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z]+)*\\.[a-z]+\\z/i",
+              format: "/\\A[\\w+\\-.]+@[a-z\\d-]+(\\.[a-z]+)*\\.[a-z]+\\z/i",
               description: StructTest::EmailType.meta[:description]
             },
 
@@ -132,7 +132,7 @@ describe Dry::Types::JSONSchema do
             }
           },
 
-          required: %i(data string list)
+          required: %i[data string list]
         }
       end
     end
