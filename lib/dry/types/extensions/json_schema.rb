@@ -94,12 +94,15 @@ module Dry
       def visit_nominal(node, opts = EMPTY_HASH)
         type, meta = node
 
-        if meta.any?
-          @keys[opts[:key]] ||= {}
-          @keys[opts[:key]].merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
+        if opts.fetch(:key, false)
+          if meta.any?
+            @keys[opts[:key]] ||= {}
+            @keys[opts[:key]].merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
+          end
+        else
+          @keys.merge!(type: CLASS_TO_TYPE[type.to_s.to_sym])
+          @keys.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
         end
-
-        type
       end
 
       def visit_predicate(node, opts = EMPTY_HASH)

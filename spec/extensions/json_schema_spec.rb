@@ -7,6 +7,17 @@ describe Dry::Types::JSONSchema do
     include Dry.Types()
   end
 
+  describe "basic" do
+    it_conforms_definition do
+      let(:title) { "Title" }
+      let(:type) { Dry::Types["string"].meta(format: :email, title: title) }
+
+      let(:definition) do
+        { type: :string, format: :email, title: title }
+      end
+    end
+  end
+
   describe "hash" do
     let(:type) do
       Dry::Types["hash"]
