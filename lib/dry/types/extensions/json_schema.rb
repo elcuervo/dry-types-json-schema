@@ -2,23 +2,37 @@
 
 module Dry
   module Types
+    # The `JSONSchema` class is responsible for converting dry-types type definitions into JSON Schema definitions.
+    # This class enables the transformation of complex type constraints into a standardized JSON Schema format,
+    # facilitating interoperability with systems that utilize JSON Schema for validation.
+    #
     class JSONSchema
+      # Error raised when an unknown predicate is encountered during schema generation.
+      #
       UnknownPredicateError = Class.new(StandardError)
 
+      # Constant definitions for various lambdas and mappings used throughout the JSON schema conversion process.
+      #
       EMPTY_HASH = {}.freeze
       IDENTITY = ->(v, _) { v }.freeze
       TO_INTEGER = ->(v, _) { v.to_i }.freeze
       INSPECT = ->(v, _) { v.inspect }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
+      # Metadata annotations and allowed types overrides for schema generation.
+      #
       ANNOTATIONS = %i[title description].freeze
       ALLOWED_TYPES_META_OVERRIDES = ANNOTATIONS.dup.concat([:format]).freeze
 
+      # Mapping for array predicate overrides.
+      #
       ARRAY_PREDICATE_OVERRIDE = {
         min_size?: :min_items?,
         max_size?: :max_items?
       }.freeze
 
+      # Mapping of Ruby classes to their corresponding JSON Schema types.
+      #
       CLASS_TO_TYPE = {
         String:     :string,
         Integer:    :integer,
@@ -34,12 +48,17 @@ module Dry
         Time:       :string
       }.freeze
 
+
+      # Additional properties for specific types, such as formatting options.
+      #
       EXTRA_PROPS_FOR_TYPE = {
         Date:     { format: :date },
         Time:     { format: :time },
         DateTime: { format: :"date-time" }
       }.freeze
 
+      # Mapping of predicate methods to their corresponding JSON Schema expressions.
+      #
       PREDICATE_TO_TYPE = {
         type?:      { type: TO_TYPE },
         min_size?:  { minLength: TO_INTEGER },
@@ -54,8 +73,15 @@ module Dry
         format?:    { format: INSPECT }
       }.freeze
 
+      # @return [Set] the set of required keys for the JSON Schema.
+      #
       attr_reader :required
 
+
+      # Initializes a new instance of the JSONSchema class.
+      # @param root [Boolean] whether this schema is the root schema.
+      # @param loose [Boolean] whether to ignore unknown predicates.
+      #
       def initialize(root: false, loose: false)
         @keys = EMPTY_HASH.dup
         @required = Set.new
@@ -63,19 +89,38 @@ module Dry
         @loose = loose
       end
 
+      # Checks if the schema is the root schema.
+      # @return [Boolean] true if this is the root schema; otherwise, false.
+      #
       def root?  = @root
+
+      # Checks if unknown predicates are ignored.
+      # @return [Boolean] true if ignoring unknown predicates; otherwise, false.
+      #
       def loose? = @loose
 
+      # Processes the abstract syntax tree (AST) and generates the JSON Schema.
+      # @param ast [Array] the abstract syntax tree representing type definitions.
+      # @return [void]
+      #
       def call(ast)
         visit(ast)
       end
 
+      # Converts the internal schema representation into a hash.
+      # @return [Hash] the JSON Schema as a hash.
+      #
       def to_hash
         result = @keys.to_hash
         result[:$schema] = "http://json-schema.org/draft-06/schema#" if root?
         result
       end
 
+      # Visits a node in the abstract syntax tree and processes it according to its type.
+      # @param node [Array] the node to process.
+      # @param opts [Hash] optional parameters for node processing.
+      # @return [void]
+      #
       def visit(node, opts = EMPTY_HASH)
         name, rest = node
         public_send(:"visit_#{name}", rest, opts)
@@ -200,9 +245,15 @@ module Dry
       end
     end
 
+    # The `Builder` module provides a method to generate a JSON Schema hash from dry-types definitions.
+    #
     module Builder
-      def json_schema(root: false)
-        compiler = JSONSchema.new(root: root)
+      # @overload json_schema(options = {})
+      #   @param options [Hash] Initialization options passed to `JSONSchema.new`
+      #   @return [Hash] The generated JSON Schema as a hash.
+      #
+      def json_schema(*)
+        compiler = JSONSchema.new(*)
         compiler.call(to_ast)
         compiler.to_hash
       end
