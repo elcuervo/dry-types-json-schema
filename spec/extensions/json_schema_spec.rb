@@ -42,9 +42,15 @@ describe Dry::Types::JSONSchema do
         .of(Types::String | Types::Hash)
         .constrained(min_size: 1)
 
+      # Validate regexp compatibility during inspect
+      #
+      EmailType = Types::String
+        .constrained(format: /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i)
+
       attribute  :data,   Types::String | Types::Hash
       attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
       attribute  :list,   VariableList
+      attribute? :email,  EmailType
       attribute? :super,  Types::Bool
     end
 
@@ -61,6 +67,7 @@ describe Dry::Types::JSONSchema do
                 { type: :object }
               ]
             },
+
             list: {
               type: :array,
               items: {
@@ -71,13 +78,20 @@ describe Dry::Types::JSONSchema do
               },
               minItems: 1,
             },
+
             string: {
               type: :string,
               minLength: 1,
               maxLength: 255
             },
+
             super: {
               type: :boolean
+            },
+
+            email: {
+              type: :string,
+              format: "/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z]+)*\\.[a-z]+\\z/i"
             }
           },
           required: %i(data string list)

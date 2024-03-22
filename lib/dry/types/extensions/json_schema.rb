@@ -8,6 +8,7 @@ module Dry
       EMPTY_HASH = {}.freeze
       IDENTITY = ->(v, _) { v }.freeze
       TO_INTEGER = ->(v, _) { v.to_i }.freeze
+      INSPECT = ->(v, _) { v.inspect }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
       ARRAY_PREDICATE_OVERRIDE = {
@@ -22,8 +23,12 @@ module Dry
         FalseClass: :boolean,
         NilClass:   :null,
         BigDecimal: :number,
+        Float:      :number,
         Hash:       :object,
         Array:      :array,
+        Date:       :date,
+        DateTime:   :datetime,
+        Time:       :time,
       }.freeze
 
       PREDICATE_TO_TYPE = {
@@ -37,6 +42,7 @@ module Dry
         gteq?:      { minimum: IDENTITY },
         lt?:        { exclusiveMaximum: IDENTITY },
         lteq?:      { maximum: IDENTITY },
+        format?:    { format: INSPECT }
       }.freeze
 
       attr_reader :required
@@ -88,7 +94,7 @@ module Dry
         head = ARRAY_PREDICATE_OVERRIDE[head] if opts[:mod]
 
         definition = PREDICATE_TO_TYPE.fetch(head) do
-          raise UnknownPredicateError
+          raise UnknownPredicateError, head
 
           EMPTY_HASH
         end.dup
