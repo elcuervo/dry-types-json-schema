@@ -37,8 +37,11 @@ module Dry
         lteq?:      { maximum: IDENTITY },
       }.freeze
 
+      attr_reader :required
+
       def initialize(root: false)
         @keys = EMPTY_HASH.dup
+        @required = Set.new
         @root = root
       end
 
@@ -148,13 +151,17 @@ module Dry
 
         keys.each { |fragment| target.visit(fragment, opts) }
 
-        definition = { type: :object, properties: target.to_hash }
+        definition = { type: :object, properties: target.to_hash }.tap do |hash|
+          hash[:required] = target.required.to_a if target.required.any?
+        end
 
         @keys.merge!(definition)
       end
 
       def visit_key(node, opts = EMPTY_HASH)
         name, required, rest = node
+
+        @required << name if required
 
         visit(rest, opts.merge(key: name))
       end

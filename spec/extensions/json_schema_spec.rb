@@ -29,7 +29,8 @@ describe Dry::Types::JSONSchema do
             active: { type: :boolean },
             migrated: { type: :null },
             views: { type: :number, minimum: 0, exclusiveMaximum: 99_999 }
-          }
+          },
+          required: %i(name age active migrated views)
         }
       end
     end
@@ -41,9 +42,10 @@ describe Dry::Types::JSONSchema do
         .of(Types::String | Types::Hash)
         .constrained(min_size: 1)
 
-      attribute :data,   Types::String | Types::Hash
-      attribute :string, Types::String.constrained(min_size: 1, max_size: 255)
-      attribute :list,   VariableList
+      attribute  :data,   Types::String | Types::Hash
+      attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
+      attribute  :list,   VariableList
+      attribute? :super,  Types::Bool
     end
 
     let(:type) { StructTest.schema }
@@ -73,8 +75,12 @@ describe Dry::Types::JSONSchema do
               type: :string,
               minLength: 1,
               maxLength: 255
+            },
+            super: {
+              type: :boolean
             }
-          }
+          },
+          required: %i(data string list)
         }
       end
     end
