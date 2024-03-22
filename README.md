@@ -5,40 +5,42 @@
 ## Example
 
 ```ruby
-  AnnotatedString = Dry::Types["string"].meta(format: :email, title: "Notes")
+Dry::Types.load_extensions(:json_schema)
 
-  AnnotatedString.json_schema
-  #=> {:type=>:string, :title=>"Notes", :format=>:email}
+AnnotatedString = Dry::Types["string"].meta(format: :email, title: "Notes")
 
-  module Types
-    include Dry.Types()
-  end
+AnnotatedString.json_schema
+#=> {:type=>:string, :title=>"Notes", :format=>:email}
 
-  class StructTest < Dry::Struct
-    schema schema.meta(title: "Title", description: "description")
+module Types
+  include Dry.Types()
+end
 
-    VariableList = Types::Array
-     .of(Types::String | Types::Hash)
-     .constrained(min_size: 1)
-     .meta(description: "Allow an array of strings or multiple hashes")
+class StructTest < Dry::Struct
+  schema schema.meta(title: "Title", description: "description")
 
-    attribute  :data,   Types::String | Types::Hash
-    attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
-    attribute  :list,   VariableList
-  end
+  VariableList = Types::Array
+   .of(Types::String | Types::Hash)
+   .constrained(min_size: 1)
+   .meta(description: "Allow an array of strings or multiple hashes")
 
-  StructTest.json_schema
-  # =>
-  # {:type=>:object,
-  #    :properties=>
-  #     {:data=>{:anyOf=>[{:type=>:string}, {:type=>:object}]},
-  #      :string=>{:type=>:string, :minLength=>1, :maxLength=>255},
-  #      :list=>
-  #       {:type=>:array,
-  #        :items=>{:anyOf=>[{:type=>:string}, {:type=>:object}]},
-  #        :description=>"Allow an array of strings or multiple hashes",
-  #        :minItems=>1}},
-  #    :required=>[:data, :string, :list],
-  #    :title=>"Title",
-  #    :description=>"description"}
+  attribute  :data,   Types::String | Types::Hash
+  attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
+  attribute  :list,   VariableList
+end
+
+StructTest.json_schema
+# =>
+# {:type=>:object,
+#    :properties=>
+#     {:data=>{:anyOf=>[{:type=>:string}, {:type=>:object}]},
+#      :string=>{:type=>:string, :minLength=>1, :maxLength=>255},
+#      :list=>
+#       {:type=>:array,
+#        :items=>{:anyOf=>[{:type=>:string}, {:type=>:object}]},
+#        :description=>"Allow an array of strings or multiple hashes",
+#        :minItems=>1}},
+#    :required=>[:data, :string, :list],
+#    :title=>"Title",
+#    :description=>"description"}
 ```
