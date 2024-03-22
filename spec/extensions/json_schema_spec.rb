@@ -75,6 +75,7 @@ describe Dry::Types::JSONSchema do
       attribute? :end,    Types::DateTime
       attribute? :epoch,  Types::Time
       attribute? :meta,   Types::String.meta(format: :email)
+      attribute? :enum,   Types::String.enum(*%w[draft published archived])
     end
 
     let(:type) { StructTest }
@@ -140,6 +141,11 @@ describe Dry::Types::JSONSchema do
             meta: {
               type: :string,
               format: :email
+            },
+
+            enum: {
+              type: :string,
+              enum: %w[draft published archived]
             }
           },
 

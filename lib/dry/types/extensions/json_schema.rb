@@ -15,8 +15,9 @@ module Dry
       #
       EMPTY_HASH = {}.freeze
       IDENTITY = ->(v, _) { v }.freeze
-      TO_INTEGER = ->(v, _) { v.to_i }.freeze
       INSPECT = ->(v, _) { v.inspect }.freeze
+      TO_INTEGER = ->(v, _) { v.to_i }.freeze
+      TO_ARRAY = ->(v, _) { v.to_a }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
       # Metadata annotations and allowed types overrides for schema generation.
@@ -59,17 +60,18 @@ module Dry
       # Mapping of predicate methods to their corresponding JSON Schema expressions.
       #
       PREDICATE_TO_TYPE = {
-        type?:      { type: TO_TYPE },
-        min_size?:  { minLength: TO_INTEGER },
-        min_items?: { minItems: TO_INTEGER },
-        max_size?:  { maxLength: TO_INTEGER },
-        max_items?: { maxItems: TO_INTEGER },
-        min?:       { maxLength: TO_INTEGER },
-        gt?:        { exclusiveMinimum: IDENTITY },
-        gteq?:      { minimum: IDENTITY },
-        lt?:        { exclusiveMaximum: IDENTITY },
-        lteq?:      { maximum: IDENTITY },
-        format?:    { format: INSPECT }
+        type?:        { type: TO_TYPE },
+        min_size?:    { minLength: TO_INTEGER },
+        min_items?:   { minItems: TO_INTEGER },
+        max_size?:    { maxLength: TO_INTEGER },
+        max_items?:   { maxItems: TO_INTEGER },
+        min?:         { maxLength: TO_INTEGER },
+        gt?:          { exclusiveMinimum: IDENTITY },
+        gteq?:        { minimum: IDENTITY },
+        lt?:          { exclusiveMaximum: IDENTITY },
+        lteq?:        { maximum: IDENTITY },
+        format?:      { format: INSPECT },
+        included_in?: { enum: TO_ARRAY },
       }.freeze
 
       # @return [Set] the set of required keys for the JSON Schema.
@@ -238,6 +240,11 @@ module Dry
         definition.merge!(meta.slice(*ANNOTATIONS))  if meta.any?
 
         @keys.merge!(definition)
+      end
+
+      def visit_enum(node, opts = EMPTY_HASH)
+        enum, _ = node
+        visit(enum, opts)
       end
 
       def visit_key(node, opts = EMPTY_HASH)
