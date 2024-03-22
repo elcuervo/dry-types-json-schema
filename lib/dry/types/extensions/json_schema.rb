@@ -11,8 +11,8 @@ module Dry
       INSPECT = ->(v, _) { v.inspect }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
-      ALLOWED_TYPES_META_OVERRIDES = %i(format).freeze
       ANNOTATIONS = %i(title description).freeze
+      ALLOWED_TYPES_META_OVERRIDES = ANNOTATIONS.dup.concat([:format]).freeze
 
       ARRAY_PREDICATE_OVERRIDE = {
         min_size?: :min_items?,

@@ -17,13 +17,15 @@ describe Dry::Types::JSONSchema do
           migrated: Dry::Types["nil"],
           views: Dry::Types["decimal"].constrained(gteq: 0, lt: 99_999),
           created_at: Dry::Types["time"]
-        )
+        ).meta(title: "Hash title")
     end
 
     it_conforms_definition do
       let(:definition) do
         {
           type: :object,
+          title: type.meta[:title],
+
           properties: {
             name: { type: :string },
             age: { type: :integer, exclusiveMinimum: 0, maximum: 99 },
@@ -51,6 +53,7 @@ describe Dry::Types::JSONSchema do
       #
       EmailType = Types::String
         .constrained(format: /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i)
+        .meta(description: "The internally used pattern")
 
       attribute  :data,   Types::String | Types::Hash
       attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
@@ -104,7 +107,8 @@ describe Dry::Types::JSONSchema do
 
             email: {
               type: :string,
-              format: "/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z]+)*\\.[a-z]+\\z/i"
+              format: "/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z]+)*\\.[a-z]+\\z/i",
+              description: StructTest::EmailType.meta[:description]
             },
 
             start: {
