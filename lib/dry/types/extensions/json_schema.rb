@@ -3,6 +3,8 @@
 module Dry
   module Types
     class JSONSchema
+      UnknownPredicateError = Class.new(StandardError)
+
       EMPTY_HASH = {}.freeze
       IDENTITY = ->(v, _) { v }.freeze
       TO_INTEGER = ->(v, _) { v.to_i }.freeze
@@ -83,14 +85,10 @@ module Dry
 
         ctx = opts[:key]
 
-        # FIXME: how to change predicates for the signature
-        #
-        if ARRAY_PREDICATE_OVERRIDE.keys.include?(head) && @keys.dig(ctx, :type) == :array
-          head = ARRAY_PREDICATE_OVERRIDE[head]
-        end
+        head = ARRAY_PREDICATE_OVERRIDE[head] if opts[:mod]
 
         definition = PREDICATE_TO_TYPE.fetch(head) do
-          raise "unsupported #{head}"
+          raise UnknownPredicateError
 
           EMPTY_HASH
         end.dup
@@ -107,7 +105,8 @@ module Dry
       def visit_sum(node, opts = EMPTY_HASH)
         *types, meta = node
 
-        # FIXME
+        # FIXME: cleaner way to generate individual type
+        #
         process = -> (type) do
           self.class.new
             .tap { |target| target.visit(type, opts) }
@@ -130,8 +129,12 @@ module Dry
 
       def visit_and(node, opts = EMPTY_HASH)
         left, right = node
+        (_, (action, ((_, left_type), ))) = left
 
         visit(left, opts)
+
+        return visit(right, opts.merge(mod: true)) if left_type == ::Array
+
         visit(right, opts)
       end
 
