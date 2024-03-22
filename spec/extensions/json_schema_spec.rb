@@ -40,9 +40,12 @@ describe Dry::Types::JSONSchema do
 
   describe "struct" do
     class StructTest < Dry::Struct
+      schema schema.meta(title: "Title", description: "description")
+
       VariableList = Types::Array
         .of(Types::String | Types::Hash)
         .constrained(min_size: 1)
+        .meta(description: "Allow an array of strings or multiple hashes")
 
       # Validate regexp compatibility during inspect
       #
@@ -65,6 +68,9 @@ describe Dry::Types::JSONSchema do
     it_conforms_definition do
       let(:definition) do
         {
+          title: StructTest.schema.meta[:title],
+          description: StructTest.schema.meta[:description],
+
           type: :object,
           properties: {
             data: {
@@ -76,6 +82,7 @@ describe Dry::Types::JSONSchema do
 
             list: {
               type: :array,
+              description: StructTest::VariableList.meta[:description],
               items: {
                 anyOf: [
                   { type: :string },

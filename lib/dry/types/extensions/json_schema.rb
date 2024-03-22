@@ -11,7 +11,8 @@ module Dry
       INSPECT = ->(v, _) { v.inspect }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
-      ALLOWED_META_OVERRIDES = %i(format).freeze
+      ALLOWED_TYPES_META_OVERRIDES = %i(format).freeze
+      ANNOTATIONS = %i(title description).freeze
 
       ARRAY_PREDICATE_OVERRIDE = {
         min_size?: :min_items?,
@@ -94,7 +95,7 @@ module Dry
 
         if meta.any?
           @keys[opts[:key]] ||= {}
-          @keys[opts[:key]].merge!(meta.slice(*ALLOWED_META_OVERRIDES))
+          @keys[opts[:key]].merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
         end
 
         type
@@ -170,6 +171,8 @@ module Dry
         type, meta = node
 
         visit(type, opts.merge(array: true))
+
+        @keys[opts[:key]].merge!(meta.slice(*ANNOTATIONS)) if meta.any?
       end
 
       def visit_schema(node, opts = EMPTY_HASH)
@@ -179,9 +182,10 @@ module Dry
 
         keys.each { |fragment| target.visit(fragment, opts) }
 
-        definition = { type: :object, properties: target.to_hash }.tap do |hash|
-          hash[:required] = target.required.to_a if target.required.any?
-        end
+        definition = { type: :object, properties: target.to_hash }
+
+        definition[:required] = target.required.to_a if target.required.any?
+        definition.merge!(meta.slice(*ANNOTATIONS))  if meta.any?
 
         @keys.merge!(definition)
       end
