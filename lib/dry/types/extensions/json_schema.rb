@@ -48,7 +48,6 @@ module Dry
         Time:       :string
       }.freeze
 
-
       # Additional properties for specific types, such as formatting options.
       #
       EXTRA_PROPS_FOR_TYPE = {
@@ -213,6 +212,11 @@ module Dry
         @keys[opts[:key]] = { type: :object }
       end
 
+      def visit_struct(node, opts = EMPTY_HASH)
+        _, schema = node
+        visit(schema, opts)
+      end
+
       def visit_array(node, opts = EMPTY_HASH)
         type, meta = node
 
@@ -252,8 +256,8 @@ module Dry
       #   @param options [Hash] Initialization options passed to `JSONSchema.new`
       #   @return [Hash] The generated JSON Schema as a hash.
       #
-      def json_schema(*)
-        compiler = JSONSchema.new(*)
+      def json_schema(**)
+        compiler = JSONSchema.new(**)
         compiler.call(to_ast)
         compiler.to_hash
       end

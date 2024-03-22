@@ -77,7 +77,7 @@ describe Dry::Types::JSONSchema do
       attribute? :meta,   Types::String.meta(format: :email)
     end
 
-    let(:type) { StructTest.schema }
+    let(:type) { StructTest }
 
     it_conforms_definition do
       let(:definition) do
