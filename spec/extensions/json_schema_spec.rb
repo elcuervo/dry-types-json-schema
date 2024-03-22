@@ -16,6 +16,7 @@ describe Dry::Types::JSONSchema do
           active: Dry::Types["bool"],
           migrated: Dry::Types["nil"],
           views: Dry::Types["decimal"].constrained(gteq: 0, lt: 99_999),
+          created_at: Dry::Types["time"]
         )
     end
 
@@ -28,9 +29,10 @@ describe Dry::Types::JSONSchema do
             age: { type: :integer, exclusiveMinimum: 0, maximum: 99 },
             active: { type: :boolean },
             migrated: { type: :null },
-            views: { type: :number, minimum: 0, exclusiveMaximum: 99_999 }
+            views: { type: :number, minimum: 0, exclusiveMaximum: 99_999 },
+            created_at: { type: :string, format: :time },
           },
-          required: %i(name age active migrated views)
+          required: %i(name age active migrated views created_at)
         }
       end
     end
@@ -52,6 +54,9 @@ describe Dry::Types::JSONSchema do
       attribute  :list,   VariableList
       attribute? :email,  EmailType
       attribute? :super,  Types::Bool
+      attribute? :start,  Types::Date
+      attribute? :end,    Types::DateTime
+      attribute? :epoch,  Types::Time
     end
 
     let(:type) { StructTest.schema }
@@ -92,8 +97,24 @@ describe Dry::Types::JSONSchema do
             email: {
               type: :string,
               format: "/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z]+)*\\.[a-z]+\\z/i"
-            }
+            },
+
+            start: {
+              type: :string,
+              format: :date
+            },
+
+            end: {
+              type: :string,
+              format: :"date-time"
+            },
+
+            epoch: {
+              type: :string,
+              format: :time
+            },
           },
+
           required: %i(data string list)
         }
       end

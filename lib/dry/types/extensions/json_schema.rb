@@ -26,10 +26,17 @@ module Dry
         Float:      :number,
         Hash:       :object,
         Array:      :array,
-        Date:       :date,
-        DateTime:   :datetime,
-        Time:       :time,
+        Date:       :string,
+        DateTime:   :string,
+        Time:       :string,
       }.freeze
+
+      EXTRA_PROPS_FOR_TYPE = {
+        Date:     { format: :date },
+        Time:     { format: :time },
+        DateTime: { format: :"date-time" },
+      }.freeze
+
 
       PREDICATE_TO_TYPE = {
         type?:      { type: TO_TYPE },
@@ -91,7 +98,7 @@ module Dry
 
         ctx = opts[:key]
 
-        head = ARRAY_PREDICATE_OVERRIDE[head] if opts[:mod]
+        head = ARRAY_PREDICATE_OVERRIDE.fetch(head) if opts[:left_type] == ::Array
 
         definition = PREDICATE_TO_TYPE.fetch(head) do
           raise UnknownPredicateError, head
@@ -104,6 +111,10 @@ module Dry
 
         return unless definition.any? && ctx
 
+        if extra = EXTRA_PROPS_FOR_TYPE[type.to_s.to_sym]
+          definition = definition.merge(extra)
+        end
+
         @keys[ctx] ||= {}
         @keys[ctx].merge!(definition)
       end
@@ -111,7 +122,7 @@ module Dry
       def visit_sum(node, opts = EMPTY_HASH)
         *types, meta = node
 
-        # FIXME: cleaner way to generate individual type
+        # FIXME: cleaner way to generate individual types
         #
         process = -> (type) do
           self.class.new
@@ -138,10 +149,7 @@ module Dry
         (_, (action, ((_, left_type), ))) = left
 
         visit(left, opts)
-
-        return visit(right, opts.merge(mod: true)) if left_type == ::Array
-
-        visit(right, opts)
+        visit(right, opts.merge(left_type: left_type))
       end
 
       def visit_hash(node, opts = EMPTY_HASH)
