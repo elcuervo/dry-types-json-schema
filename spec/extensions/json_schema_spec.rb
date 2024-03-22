@@ -57,6 +57,7 @@ describe Dry::Types::JSONSchema do
       attribute? :start,  Types::Date
       attribute? :end,    Types::DateTime
       attribute? :epoch,  Types::Time
+      attribute? :meta,   Types::String.meta(format: :email)
     end
 
     let(:type) { StructTest.schema }
@@ -113,6 +114,11 @@ describe Dry::Types::JSONSchema do
               type: :string,
               format: :time
             },
+
+            meta: {
+              type: :string,
+              format: :email
+            }
           },
 
           required: %i(data string list)

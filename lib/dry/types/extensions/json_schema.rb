@@ -11,6 +11,8 @@ module Dry
       INSPECT = ->(v, _) { v.inspect }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
+      ALLOWED_META_OVERRIDES = %i(format).freeze
+
       ARRAY_PREDICATE_OVERRIDE = {
         min_size?: :min_items?,
         max_size?: :max_items?,
@@ -88,7 +90,13 @@ module Dry
       end
 
       def visit_nominal(node, opts = EMPTY_HASH)
-        type, _ = node
+        type, meta = node
+
+        if meta.any?
+          @keys[opts[:key]] ||= {}
+          @keys[opts[:key]].merge!(meta.slice(*ALLOWED_META_OVERRIDES))
+        end
+
         type
       end
 
