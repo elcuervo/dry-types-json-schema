@@ -66,6 +66,10 @@ describe Dry::Types::JSONSchema do
         .constrained(format: /\A[\w+\-.]+@[a-z\d-]+(\.[a-z]+)*\.[a-z]+\z/i)
         .meta(description: "The internally used pattern")
 
+      ArrayOfStrings = Types::Array
+        .of(Types::String)
+        .constrained(min_size: 1)
+
       attribute  :data,   Types::String | Types::Hash
       attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
       attribute  :list,   VariableList
@@ -76,6 +80,9 @@ describe Dry::Types::JSONSchema do
       attribute? :epoch,  Types::Time
       attribute? :meta,   Types::String.meta(format: :email)
       attribute? :enum,   Types::String.enum(*%w[draft published archived])
+      attribute? :nested do
+        attribute :deep, Types::Integer
+      end
     end
 
     let(:type) { StructTest }
@@ -146,6 +153,16 @@ describe Dry::Types::JSONSchema do
             enum: {
               type: :string,
               enum: %w[draft published archived]
+            },
+
+            nested: {
+              type: :object,
+              properties: {
+                deep: { type: :integer }
+              },
+              required: [:deep],
+              title: "Title",
+              description: "description"
             }
           },
 

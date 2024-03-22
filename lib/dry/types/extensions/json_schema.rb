@@ -175,20 +175,23 @@ module Dry
         @keys[ctx].merge!(definition)
       end
 
+
+      # FIXME: cleaner way to generate individual types
+      #
+      def single_type(type, opts)
+        self.class.new
+          .tap { |target| target.visit(type, opts) }
+          .to_hash
+          .values
+          .first
+      end
+
       def visit_sum(node, opts = EMPTY_HASH)
         *types, _ = node
 
-        # FIXME: cleaner way to generate individual types
-        #
-        process = -> (type) do
-          self.class.new
-            .tap { |target| target.visit(type, opts) }
-            .to_hash
-            .values
-            .first
-        end
-
-        result = types.map(&process).uniq
+        result = types
+          .map { |type| single_type(type, opts) }
+          .uniq
 
         return @keys[opts[:key]] = result.first if result.count == 1
 
@@ -216,7 +219,15 @@ module Dry
 
       def visit_struct(node, opts = EMPTY_HASH)
         _, schema = node
-        visit(schema, opts)
+
+        if opts[:key]
+          target = self.class.new
+          target.visit(schema)
+
+          @keys[opts[:key]] = target.to_hash
+        else
+          visit(schema, opts)
+        end
       end
 
       def visit_array(node, opts = EMPTY_HASH)
