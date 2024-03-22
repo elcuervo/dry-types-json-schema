@@ -83,7 +83,8 @@ module Dry
 
         ctx = opts[:key]
 
-        # FIXME
+        # FIXME: how to change predicates for the signature
+        #
         if ARRAY_PREDICATE_OVERRIDE.keys.include?(head) && @keys.dig(ctx, :type) == :array
           head = ARRAY_PREDICATE_OVERRIDE[head]
         end
@@ -107,13 +108,15 @@ module Dry
         *types, meta = node
 
         # FIXME
-        result = types.map do |type|
+        process = -> (type) do
           self.class.new
             .tap { |target| target.visit(type, opts) }
             .to_hash
             .values
             .first
-        end.uniq
+        end
+
+        result = types.map(&process).uniq
 
         return @keys[opts[:key]] = result.first if result.count == 1
 
