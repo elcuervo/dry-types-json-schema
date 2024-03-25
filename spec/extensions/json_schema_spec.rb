@@ -70,6 +70,9 @@ describe Dry::Types::JSONSchema do
         .of(Types::String)
         .constrained(min_size: 1)
 
+      BasicHash = Types::Hash.schema(name: Types::String)
+      ExtendedHash = Types::Hash.schema(age: Types::Integer) & BasicHash
+
       attribute  :data,   Types::String | Types::Hash
       attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
       attribute  :list,   VariableList
@@ -81,6 +84,8 @@ describe Dry::Types::JSONSchema do
       attribute? :meta,   Types::String.meta(format: :email)
       attribute? :enum,   Types::String.enum(*%w[draft published archived])
       attribute? :array,  ArrayOfStrings
+      attribute? :inter,  ExtendedHash
+
       attribute? :nested do
         attribute :deep, Types::Integer
       end
@@ -160,6 +165,15 @@ describe Dry::Types::JSONSchema do
               type: :array,
               minItems: 1,
               items: { type: :string }
+            },
+
+            inter: {
+              type: :object,
+              properties: {
+                age: { type: :integer },
+                name: { type: :string }
+              },
+              required: %i[age name]
             },
 
             nested: {

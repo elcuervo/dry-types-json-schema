@@ -171,6 +171,19 @@ module Dry
         @keys[ctx].merge!(definition)
       end
 
+      # FIXME: Check for type compatibility
+      def visit_intersection(node, opts = EMPTY_HASH)
+        *types, _ = node
+
+        result = types.map do |type|
+          target = self.class.new
+          target.visit(type)
+          target.to_hash
+        end
+
+        @keys[opts[:key]] = deep_merge_items(result)
+      end
+
       def visit_sum(node, opts = EMPTY_HASH)
         *types, _ = node
 
@@ -252,6 +265,21 @@ module Dry
       end
 
       private
+
+      def deep_merge_items(items)
+        items.reduce({}) do |current, target|
+          current.merge(target) do |_, from, to|
+            case [from.class, to.class]
+            when [::Hash, ::Hash]
+              deep_merge_items([from, to])
+            when [::Array, ::Array]
+              from | to
+            else
+              to
+            end
+          end
+        end
+      end
 
       # FIXME: cleaner way to generate individual types
       #
