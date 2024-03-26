@@ -171,7 +171,6 @@ module Dry
         @keys[ctx].merge!(definition)
       end
 
-      # FIXME: Check for type compatibility
       def visit_intersection(node, opts = EMPTY_HASH)
         *types, _ = node
 
