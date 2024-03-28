@@ -16,6 +16,14 @@ describe Dry::Types::JSONSchema do
         { type: :string, format: :email, title: title }
       end
     end
+
+    it_conforms_definition do
+      let(:type) { Dry::Types["string"].enum(*%w[a b]) }
+
+      let(:definition) do
+        { type: :string, enum: %w[a b] }
+      end
+    end
   end
 
   describe "hash" do
