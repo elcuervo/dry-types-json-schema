@@ -17,7 +17,7 @@ module Dry
       IDENTITY = ->(v, _) { v }.freeze
       INSPECT = ->(v, _) { v.inspect }.freeze
       TO_INTEGER = ->(v, _) { v.to_i }.freeze
-      TO_ARRAY = ->(v, _) { v.to_a }.freeze
+      TO_ARRAY = ->(v, _) { Array(v) }.freeze
       TO_TYPE = ->(v, _) { CLASS_TO_TYPE.fetch(v.to_s.to_sym) }.freeze
 
       # Metadata annotations and allowed types overrides for schema generation.
@@ -161,14 +161,18 @@ module Dry
 
         definition.transform_values! { |v| v.call(type, ctx) }
 
-        return unless definition.any? && ctx
+        return unless definition.any?
 
         if (extra = EXTRA_PROPS_FOR_TYPE[type.to_s.to_sym])
           definition = definition.merge(extra)
         end
 
-        @keys[ctx] ||= {}
-        @keys[ctx].merge!(definition)
+        if ctx.nil?
+          @keys.merge!(definition)
+        else
+          @keys[ctx] ||= {}
+          @keys[ctx].merge!(definition)
+        end
       end
 
       def visit_intersection(node, opts = EMPTY_HASH)
