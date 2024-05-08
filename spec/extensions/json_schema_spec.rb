@@ -64,13 +64,14 @@ describe Dry::Types::JSONSchema do
       let(:type) do
         Dry::Types["array"]
           .of(Dry::Types["integer"])
-          .constrained(min_size: 1)
+          .constrained(min_size: 1, max_size: 100)
       end
 
       let(:definition) do
         {
           type: :array,
           minItems: 1,
+          maxItems: 100,
           items: { type: :integer }
         }
       end

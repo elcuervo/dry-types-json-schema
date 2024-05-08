@@ -192,7 +192,7 @@ module Dry
         *types, _ = node
 
         result = types
-          .map { |type| compile_value(type, opts.merge(sum: true)) }
+          .map { |type| compile_value(type, { sum: true }.merge(opts)) }
           .uniq
 
         return @keys[opts[:key]] = result.first if result.count == 1
@@ -210,7 +210,7 @@ module Dry
         (_, (_, ((_, left_type),))) = left
 
         visit(left, opts)
-        visit(right, opts.merge(left_type: left_type))
+        visit(right, { left_type: left_type }.merge(opts))
       end
 
       def visit_hash(node, opts = EMPTY_HASH)
@@ -230,7 +230,7 @@ module Dry
       def visit_array(node, opts = EMPTY_HASH)
         type, meta = node
 
-        visit(type, opts.merge(array: true))
+        visit(type, { array: true }.merge(opts))
 
         @keys[opts[:key]].merge!(meta.slice(*ANNOTATIONS)) if meta.any?
       end
@@ -260,7 +260,7 @@ module Dry
 
         @required << name if required
 
-        visit(rest, opts.merge(key: name))
+        visit(rest, { key: name }.merge(opts))
       end
 
       private
