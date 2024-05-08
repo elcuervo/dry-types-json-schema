@@ -240,14 +240,18 @@ module Dry
 
         target = self.class.new
 
-        keys.each { |fragment| target.visit(fragment, opts) }
+        keys.each { |fragment| target.visit(fragment) }
 
         definition = { type: :object, properties: target.to_hash }
 
         definition[:required] = target.required.to_a if target.required.any?
         definition.merge!(meta.slice(*ANNOTATIONS))  if meta.any?
 
-        @keys.merge!(definition)
+        if opts.key?(:array)
+          @keys.merge!(items: definition.to_h)
+        else
+          @keys.merge!(definition)
+        end
       end
 
       def visit_enum(node, opts = EMPTY_HASH)

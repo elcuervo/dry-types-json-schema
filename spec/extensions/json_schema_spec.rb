@@ -76,6 +76,34 @@ describe Dry::Types::JSONSchema do
         }
       end
     end
+
+    it_conforms_definition do
+      let(:object) do
+        Dry::Types["hash"]
+          .schema(id: Dry::Types["integer"])
+      end
+
+      let(:type) do
+        Dry::Types["array"]
+          .of(object)
+          .constrained(min_size: 1, max_size: 100)
+      end
+
+      let(:definition) do
+        {
+          type: :array,
+          minItems: 1,
+          maxItems: 100,
+          items: {
+            type: :object,
+            properties: {
+              id: { type: :integer }
+            },
+            required: [:id]
+          }
+        }
+      end
+    end
   end
 
   describe "struct" do
