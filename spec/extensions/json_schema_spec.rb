@@ -59,6 +59,24 @@ describe Dry::Types::JSONSchema do
     end
   end
 
+  describe "array" do
+    it_conforms_definition do
+      let(:type) do
+        Dry::Types["array"]
+          .of(Dry::Types["integer"])
+          .constrained(min_size: 1)
+      end
+
+      let(:definition) do
+        {
+          type: :array,
+          minItems: 1,
+          items: { type: :integer }
+        }
+      end
+    end
+  end
+
   describe "struct" do
     class StructTest < Dry::Struct
       schema schema.meta(title: "Title", description: "description")

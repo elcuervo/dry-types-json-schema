@@ -85,6 +85,7 @@ module Dry
       def initialize(root: false, loose: false)
         @keys = EMPTY_HASH.dup
         @required = Set.new
+
         @root = root
         @loose = loose
       end
@@ -139,10 +140,14 @@ module Dry
       def visit_nominal(node, opts = EMPTY_HASH)
         type, meta = node
 
-        if opts.fetch(:key, false)
+        if opts.key?(:key)
           visit_nominal_with_key(node, opts)
         else
-          @keys.merge!(type: CLASS_TO_TYPE[type.to_s.to_sym])
+          if opts.key?(:array)
+            @keys.merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
+          else
+            @keys.merge!(type: CLASS_TO_TYPE[type.to_s.to_sym])
+          end
           @keys.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
         end
       end
