@@ -215,6 +215,17 @@ module Dry
           .map { |type| compile_type(type, { sum: true }.merge(opts)) }
           .uniq
 
+        # FIXME
+        null = result.find { |element| element[:type] == :null }
+        sans_null = result.reject { |element| element[:type] == :null }
+
+        if sans_null.count == 1
+          @keys = sans_null.first
+          @keys.merge!(nullable: true)
+
+          return @keys
+        end
+
         return @keys = result.first if result.count == 1
 
         return @keys = { anyOf: result } unless opts[:array]
@@ -287,10 +298,12 @@ module Dry
         definition[:required] = target.required.to_a if target.required.any?
         definition.merge!(meta.slice(*ANNOTATIONS))  if meta.any?
 
+        ctx = opts.key?(:key) ? @keys[opts[:key]] ||= {} : @keys
+
         if opts.key?(:array)
-          @keys.merge!(items: definition.to_h)
+          ctx.merge!(items: definition.to_h)
         else
-          @keys.merge!(definition)
+          ctx.merge!(definition)
         end
       end
 

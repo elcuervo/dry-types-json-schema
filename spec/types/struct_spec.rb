@@ -33,6 +33,7 @@ describe "struct" do
     attribute  :data,   Types::String | Types::Hash
     attribute  :string, Types::String.constrained(min_size: 1, max_size: 255)
     attribute  :list,   VariableList
+    attribute? :basics, Types::Array.of(BasicHash)
     attribute? :null,   NilableString
     attribute? :email,  EmailType
     attribute? :super,  Types::Bool
@@ -66,6 +67,17 @@ describe "struct" do
               { type: :string },
               { type: :object }
             ]
+          },
+
+          basics: {
+            type: :array,
+            items: {
+              type: :object,
+              properties: {
+                name: { type: :string }
+              },
+              required: [:name]
+            }
           },
 
           null: {

@@ -5,8 +5,8 @@ require "spec_helper"
 describe "array" do
   it_conforms_definition do
     let(:type) do
-      Dry::Types["array"]
-        .of(Dry::Types["integer"])
+      Types::Array
+        .of(Types::Integer)
         .constrained(min_size: 1, max_size: 100)
     end
 
@@ -37,12 +37,12 @@ describe "array" do
 
   it_conforms_definition do
     let(:object) do
-      Dry::Types["hash"]
-        .schema(id: Dry::Types["integer"])
+      Types::Hash
+        .schema(id: Types::Integer)
     end
 
     let(:type) do
-      Dry::Types["array"]
+      Types::Array
         .of(object)
         .constrained(min_size: 1, max_size: 100)
     end

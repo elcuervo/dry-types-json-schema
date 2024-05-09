@@ -51,14 +51,14 @@ describe "hash" do
   end
 
   it_conforms_definition do
-    let(:type) { Types::Hash.schema(word: Types::String) | Types::Nil }
+    let(:type) { Types::Nil | Types::Hash.schema(word: Types::String) }
 
     let(:definition) do
       {
         type: :object,
         nullable: true,
         properties: {
-          word: { types: :string }
+          word: { type: :string }
         },
         required: [:word]
       }
