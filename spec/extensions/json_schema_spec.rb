@@ -151,6 +151,10 @@ describe Dry::Types::JSONSchema do
   end
 
   describe "struct" do
+    class AnotherStruct < Dry::Struct
+      attribute :something, Types::String
+    end
+
     class StructTest < Dry::Struct
       schema schema.meta(title: "Title", description: "description")
 
@@ -184,6 +188,8 @@ describe Dry::Types::JSONSchema do
       attribute? :enum,   Types::String.enum(*%w[draft published archived])
       attribute? :array,  ArrayOfStrings
       attribute? :inter,  ExtendedHash
+      attribute? :ref,    AnotherStruct.meta("$ref": "SomeRef")
+      attribute? :refs,   Types::Array.of(AnotherStruct.meta("$ref": "SomeRef"))
 
       attribute? :nested do
         attribute :deep, Types::Integer
@@ -205,6 +211,13 @@ describe Dry::Types::JSONSchema do
                 { type: :string },
                 { type: :object }
               ]
+            },
+
+            refs: {
+              type: :array,
+              items: {
+                "$ref": "SomeRef"
+              }
             },
 
             list: {
@@ -273,6 +286,10 @@ describe Dry::Types::JSONSchema do
                 name: { type: :string }
               },
               required: %i[age name]
+            },
+
+            ref: {
+              "$ref": "SomeRef"
             },
 
             nested: {

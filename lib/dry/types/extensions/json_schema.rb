@@ -227,9 +227,13 @@ module Dry
       def visit_struct(node, opts = EMPTY_HASH)
         _, schema = node
 
-        return visit(schema, opts) unless opts[:key]
+        return visit(schema, opts) unless opts.key?(:key)
 
-        @keys[opts[:key]] = compile_type(schema)
+        if opts.key?(:array)
+          @keys[opts[:key]] = { items: compile_type(schema) }
+        else
+          @keys[opts[:key]] = compile_type(schema)
+        end
       end
 
       def visit_array(node, opts = EMPTY_HASH)
