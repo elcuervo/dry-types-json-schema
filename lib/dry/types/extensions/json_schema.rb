@@ -189,7 +189,7 @@ module Dry
         @keys[opts[:key]] = deep_merge_items(result)
       end
 
-      def visit_sum(node, opts = EMPTY_HASH)
+      def visit_sum_with_key(node, opts = EMPTY_HASH)
         *types, _ = node
 
         result = types
@@ -201,6 +201,25 @@ module Dry
         return @keys[opts[:key]] = { anyOf: result } unless opts[:array]
 
         @keys[opts[:key]] = {
+          type: :array,
+          items: { anyOf: result }
+        }
+      end
+
+      def visit_sum(node, opts = EMPTY_HASH)
+        return visit_sum_with_key(node, opts) if opts.key?(:key)
+
+        *types, _ = node
+
+        result = types
+          .map { |type| compile_type(type, { sum: true }.merge(opts)) }
+          .uniq
+
+        return @keys = result.first if result.count == 1
+
+        return @keys = { anyOf: result } unless opts[:array]
+
+        @keys = {
           type: :array,
           items: { anyOf: result }
         }
