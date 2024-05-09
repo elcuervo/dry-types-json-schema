@@ -13,4 +13,4 @@ console:
 	irb -Ilib:spec -rspec_helper.rb
 
 test:
-	ruby -Ilib:spec -rpry spec/**/*_spec.rb
+	bundle exec rake
