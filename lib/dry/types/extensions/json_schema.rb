@@ -219,7 +219,7 @@ module Dry
         null = result.find { |element| element[:type] == :null }
         sans_null = result.reject { |element| element[:type] == :null }
 
-        if sans_null.count == 1
+        if sans_null.count == 1 && null
           @keys = sans_null.first
           @keys.merge!(nullable: true)
 
