@@ -240,8 +240,20 @@ module Dry
         @keys[opts[:key]].merge!(meta.slice(*ANNOTATIONS)) if meta.any?
       end
 
+      def visit_schema_with_ref(node, opts = EMPTY_HASH)
+        _, _, meta = node
+
+        if opts.key?(:array)
+          @keys.merge!(items: { "$ref": meta[:"$ref"] })
+        else
+          @keys.merge!("$ref": meta[:"$ref"])
+        end
+      end
+
       def visit_schema(node, opts = EMPTY_HASH)
         keys, _, meta = node
+
+        return visit_schema_with_ref(node, opts) if meta.key?(:"$ref")
 
         target = self.class.new
 
@@ -253,11 +265,7 @@ module Dry
         definition.merge!(meta.slice(*ANNOTATIONS))  if meta.any?
 
         if opts.key?(:array)
-          if meta.key?(:"$ref")
-            @keys.merge!(items: { "$ref": meta[:"$ref"] })
-          else
-            @keys.merge!(items: definition.to_h)
-          end
+          @keys.merge!(items: definition.to_h)
         else
           @keys.merge!(definition)
         end
@@ -310,17 +318,17 @@ module Dry
 
         @keys[opts[:key]] ||= {}
 
-        context = @keys[opts[:key]]
+        ctx = @keys[opts[:key]]
 
         if meta.any?
-          context.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
+          ctx.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
         end
 
         if opts.key?(:array) && !opts.key?(:sum)
           if meta.key?(:"$ref")
-            context.merge!(items: { "$ref": meta[:"$ref"] })
+            ctx.merge!(items: { "$ref": meta[:"$ref"] })
           else
-            context.merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
+            ctx.merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
           end
         end
       end
