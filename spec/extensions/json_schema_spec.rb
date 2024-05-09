@@ -3,10 +3,6 @@
 require "spec_helper"
 
 describe Dry::Types::JSONSchema do
-  module Types
-    include Dry.Types()
-  end
-
   describe "basic" do
     it_conforms_definition do
       let(:title) { "Title" }
@@ -27,19 +23,19 @@ describe Dry::Types::JSONSchema do
   end
 
   describe "hash" do
-    let(:type) do
-      Dry::Types["hash"]
-        .schema(
-          name: Dry::Types["string"],
-          age: Dry::Types["integer"].constrained(gt: 0, lteq: 99),
-          active: Dry::Types["bool"],
-          migrated: Dry::Types["nil"],
-          views: Dry::Types["decimal"].constrained(gteq: 0, lt: 99_999),
-          created_at: Dry::Types["time"]
-        ).meta(title: "Hash title")
-    end
-
     it_conforms_definition do
+      let(:type) do
+        Dry::Types["hash"]
+          .schema(
+            name: Dry::Types["string"],
+            age: Dry::Types["integer"].constrained(gt: 0, lteq: 99),
+            active: Dry::Types["bool"],
+            migrated: Dry::Types["nil"],
+            views: Dry::Types["decimal"].constrained(gteq: 0, lt: 99_999),
+            created_at: Dry::Types["time"]
+          ).meta(title: "Hash title")
+      end
+
       let(:definition) do
         {
           type: :object,
@@ -54,6 +50,29 @@ describe Dry::Types::JSONSchema do
             created_at: { type: :string, format: :time }
           },
           required: %i[name age active migrated views created_at]
+        }
+      end
+    end
+
+    it_conforms_definition do
+      let(:ref) { "#/components/schemas/Cat" }
+
+      let(:type) do
+        Types::Hash
+          .schema(
+            input: Types::String.meta("$ref": ref)
+          )
+      end
+
+      let(:definition) do
+        {
+          type: :object,
+
+          properties: {
+            input: { type: :string }
+          },
+
+          required: [:input]
         }
       end
     end
@@ -73,6 +92,21 @@ describe Dry::Types::JSONSchema do
           minItems: 1,
           maxItems: 100,
           items: { type: :integer }
+        }
+      end
+    end
+
+    it_conforms_definition do
+      let(:ref)    { "#/some/path/Schema" }
+      let(:schema) { Types::Hash.schema(age: Types::Integer) }
+      let(:type)   { Types::Array.of(schema.meta("$ref": ref)) }
+
+      let(:definition) do
+        {
+          type: :array,
+          items: {
+            "$ref": ref
+          }
         }
       end
     end
@@ -102,6 +136,16 @@ describe Dry::Types::JSONSchema do
             required: [:id]
           }
         }
+      end
+    end
+  end
+
+  describe "hash" do
+    it_conforms_definition do
+      let(:type) { Types::Hash }
+
+      let(:definition) do
+        { type: :object }
       end
     end
   end

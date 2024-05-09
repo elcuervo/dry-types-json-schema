@@ -14,6 +14,10 @@ require "dry/types/extensions"
 
 Dry::Types.load_extensions(:json_schema)
 
+module Types
+  include Dry.Types()
+end
+
 module Minitest::Assertions
   def assert_equal_diff(expected, actual, msg = nil)
     assert_equal(expected, actual, msg)

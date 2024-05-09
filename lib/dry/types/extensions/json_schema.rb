@@ -148,6 +148,7 @@ module Dry
           else
             @keys.merge!(type: CLASS_TO_TYPE[type.to_s.to_sym])
           end
+
           @keys.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
         end
       end
@@ -216,7 +217,11 @@ module Dry
       def visit_hash(node, opts = EMPTY_HASH)
         _part, _meta = node
 
-        @keys[opts[:key]] = { type: :object }
+        if opts.key?(:key)
+          @keys[opts[:key]] = { type: :object }
+        else
+          @keys.merge!({ type: :object })
+        end
       end
 
       def visit_struct(node, opts = EMPTY_HASH)
@@ -248,7 +253,11 @@ module Dry
         definition.merge!(meta.slice(*ANNOTATIONS))  if meta.any?
 
         if opts.key?(:array)
-          @keys.merge!(items: definition.to_h)
+          if meta.key?(:"$ref")
+            @keys.merge!(items: { "$ref": meta[:"$ref"] })
+          else
+            @keys.merge!(items: definition.to_h)
+          end
         else
           @keys.merge!(definition)
         end
@@ -299,14 +308,20 @@ module Dry
       def visit_nominal_with_key(node, opts = EMPTY_HASH)
         type, meta = node
 
-        if opts[:array] && !opts[:sum]
-          @keys[opts[:key]] ||= {}
-          @keys[opts[:key]].merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
-        end
+        @keys[opts[:key]] ||= {}
+
+        context = @keys[opts[:key]]
 
         if meta.any?
-          @keys[opts[:key]] ||= {}
-          @keys[opts[:key]].merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
+          context.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
+        end
+
+        if opts.key?(:array) && !opts.key?(:sum)
+          if meta.key?(:"$ref")
+            context.merge!(items: { "$ref": meta[:"$ref"] })
+          else
+            context.merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
+          end
         end
       end
     end
