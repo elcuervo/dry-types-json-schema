@@ -83,7 +83,7 @@ module Dry
       # @param loose [Boolean] whether to ignore unknown predicates.
       #
       def initialize(root: false, loose: false)
-        @keys = EMPTY_HASH.dup
+        @keys = ::Hash.new { |h, k| h[k] = {} }
         @required = Set.new
 
         @root = root
@@ -140,17 +140,13 @@ module Dry
       def visit_nominal(node, opts = EMPTY_HASH)
         type, meta = node
 
-        if opts.key?(:key)
-          visit_nominal_with_key(node, opts)
-        else
-          if opts.key?(:array)
-            update(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
-          else
-            update(type: CLASS_TO_TYPE[type.to_s.to_sym])
-          end
+        return visit_nominal_with_key(node, opts) if opts.key?(:key)
 
-          update meta.slice(*ALLOWED_TYPES_META_OVERRIDES) if meta.any?
-        end
+        update meta.slice(*ALLOWED_TYPES_META_OVERRIDES) if meta.any?
+
+        return update(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] }) if opts.key?(:array)
+
+        update(type: CLASS_TO_TYPE[type.to_s.to_sym])
       end
 
       def visit_predicate(node, opts = EMPTY_HASH)
@@ -173,12 +169,9 @@ module Dry
           definition = definition.merge(extra)
         end
 
-        if ctx.nil?
-          update(definition)
-        else
-          keys[ctx] ||= {}
-          keys[ctx].merge!(definition)
-        end
+        return update(definition) if ctx.nil?
+
+        keys[ctx].update(definition)
       end
 
       def visit_intersection(node, opts = EMPTY_HASH)
@@ -200,10 +193,7 @@ module Dry
 
         return update(opts[:key] => { anyOf: result }) unless opts[:array]
 
-        update(opts[:key] => {
-          type: :array,
-          items: { anyOf: result }
-        })
+        update(opts[:key] => { type: :array, items: { anyOf: result } })
       end
 
       def visit_sum(node, opts = EMPTY_HASH)
@@ -224,9 +214,9 @@ module Dry
         return set({ anyOf: result }) unless opts[:array]
 
         set({
-          type: :array,
+              type: :array,
           items: { anyOf: result }
-        })
+            })
       end
 
       def visit_and(node, opts = EMPTY_HASH)
@@ -260,11 +250,9 @@ module Dry
       def visit_schema_with_ref(node, opts = EMPTY_HASH)
         _, _, meta = node
 
-        if opts.key?(:array)
-          update(items: { "$ref": meta[:"$ref"] })
-        else
-          update("$ref": meta[:"$ref"])
-        end
+        return update(items: { "$ref": meta[:"$ref"] }) if opts.key?(:array)
+
+        update("$ref": meta[:"$ref"])
       end
 
       def visit_schema(node, opts = EMPTY_HASH)
@@ -281,13 +269,11 @@ module Dry
         definition[:required] = target.required.to_a if target.required.any?
         definition.merge!(meta.slice(*ANNOTATIONS))  if meta.any?
 
-        ctx = opts.key?(:key) ? @keys[opts[:key]] ||= {} : @keys
+        ctx = opts.key?(:key) ? @keys[opts[:key]] : @keys
 
-        if opts.key?(:array)
-          ctx.update(items: definition.to_h)
-        else
-          ctx.update(definition)
-        end
+        return ctx.update(items: definition.to_h) if opts.key?(:array)
+
+        ctx.update(definition)
       end
 
       def visit_enum(node, opts = EMPTY_HASH)
@@ -301,6 +287,18 @@ module Dry
         @required << name if required
 
         visit(rest, { key: name }.merge(opts))
+      end
+
+      def visit_nominal_with_key(node, opts = EMPTY_HASH)
+        type, meta = node
+
+        update(opts[:key] => meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
+
+        if opts.key?(:array) && !opts.key?(:sum)
+          return update(opts[:key] => { items: { "$ref": meta[:"$ref"] } }) if meta.key?(:"$ref")
+
+          update(opts[:key] => { items: { type: CLASS_TO_TYPE[type.to_s.to_sym] } })
+        end
       end
 
       private
@@ -334,26 +332,6 @@ module Dry
         compile_type(type, opts)
           .values
           .first
-      end
-
-      def visit_nominal_with_key(node, opts = EMPTY_HASH)
-        type, meta = node
-
-        @keys[opts[:key]] ||= {}
-
-        ctx = @keys[opts[:key]]
-
-        if meta.any?
-          ctx.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES))
-        end
-
-        if opts.key?(:array) && !opts.key?(:sum)
-          if meta.key?(:"$ref")
-            ctx.merge!(items: { "$ref": meta[:"$ref"] })
-          else
-            ctx.merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
-          end
-        end
       end
     end
 
