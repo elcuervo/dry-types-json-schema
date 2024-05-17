@@ -144,12 +144,12 @@ module Dry
           visit_nominal_with_key(node, opts)
         else
           if opts.key?(:array)
-            keys.update(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
+            update(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
           else
-            keys.update(type: CLASS_TO_TYPE[type.to_s.to_sym])
+            update(type: CLASS_TO_TYPE[type.to_s.to_sym])
           end
 
-          keys.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
+          update meta.slice(*ALLOWED_TYPES_META_OVERRIDES) if meta.any?
         end
       end
 
@@ -174,7 +174,7 @@ module Dry
         end
 
         if ctx.nil?
-          keys.merge!(definition)
+          update(definition)
         else
           keys[ctx] ||= {}
           keys[ctx].merge!(definition)
@@ -186,7 +186,7 @@ module Dry
 
         result = types.map { |type| compile_type(type) }
 
-        keys.update(opts[:key] => deep_merge_items(result))
+        update(opts[:key] => deep_merge_items(result))
       end
 
       def visit_sum_with_key(node, opts = EMPTY_HASH)
@@ -196,14 +196,14 @@ module Dry
           .map { |type| compile_value(type, { sum: true }.merge(opts)) }
           .uniq
 
-        return keys[opts[:key]] = result.first if result.count == 1
+        return update(opts[:key] => result.first) if result.count == 1
 
-        return keys[opts[:key]] = { anyOf: result } unless opts[:array]
+        return update(opts[:key] => { anyOf: result }) unless opts[:array]
 
-        keys[opts[:key]] = {
+        update(opts[:key] => {
           type: :array,
           items: { anyOf: result }
-        }
+        })
       end
 
       def visit_sum(node, opts = EMPTY_HASH)
@@ -215,25 +215,18 @@ module Dry
           .map { |type| compile_type(type, { sum: true }.merge(opts)) }
           .uniq
 
-        # FIXME
-        null = result.find { |element| element[:type] == :null }
-        sans_null = result.reject { |element| element[:type] == :null }
+        null, sans_null = result.partition { |element| element[:type] == :null }
 
-        if sans_null.count == 1 && null
-          @keys = sans_null.first
-          @keys.merge!(nullable: true)
+        return set sans_null.first.update(nullable: true) if sans_null.count == 1 && null
 
-          return @keys
-        end
+        return set result.first if result.count == 1
 
-        return @keys = result.first if result.count == 1
+        return set({ anyOf: result }) unless opts[:array]
 
-        return @keys = { anyOf: result } unless opts[:array]
-
-        @keys = {
+        set({
           type: :array,
           items: { anyOf: result }
-        }
+        })
       end
 
       def visit_and(node, opts = EMPTY_HASH)
@@ -251,11 +244,9 @@ module Dry
 
         return visit(schema, opts) unless opts.key?(:key)
 
-        @keys[opts[:key]] = if opts.key?(:array)
-                              { items: compile_type(schema) }
-                            else
-                              compile_type(schema)
-                            end
+        result = opts.key?(:array) ? { items: compile_type(schema) } : compile_type(schema)
+
+        update(opts[:key] => result)
       end
 
       def visit_array(node, opts = EMPTY_HASH)
@@ -263,16 +254,16 @@ module Dry
 
         visit(type, { array: true }.merge(opts))
 
-        @keys[opts[:key]].merge!(meta.slice(*ANNOTATIONS)) if meta.any?
+        keys[opts[:key]].update(meta.slice(*ANNOTATIONS)) if meta.any?
       end
 
       def visit_schema_with_ref(node, opts = EMPTY_HASH)
         _, _, meta = node
 
         if opts.key?(:array)
-          @keys.merge!(items: { "$ref": meta[:"$ref"] })
+          update(items: { "$ref": meta[:"$ref"] })
         else
-          @keys.merge!("$ref": meta[:"$ref"])
+          update("$ref": meta[:"$ref"])
         end
       end
 
@@ -293,9 +284,9 @@ module Dry
         ctx = opts.key?(:key) ? @keys[opts[:key]] ||= {} : @keys
 
         if opts.key?(:array)
-          ctx.merge!(items: definition.to_h)
+          ctx.update(items: definition.to_h)
         else
-          ctx.merge!(definition)
+          ctx.update(definition)
         end
       end
 
@@ -313,6 +304,10 @@ module Dry
       end
 
       private
+
+      def set(value) = @keys = value
+
+      def update(object) = @keys.update(object)
 
       def deep_merge_items(items)
         items.reduce({}) do |current, target|
