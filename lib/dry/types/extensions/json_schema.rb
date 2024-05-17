@@ -76,13 +76,13 @@ module Dry
 
       # @return [Set] the set of required keys for the JSON Schema.
       #
-      attr_reader :required
+      attr_reader :required, :keys
 
       # Initializes a new instance of the JSONSchema class.
       # @param root [Boolean] whether this schema is the root schema.
       # @param loose [Boolean] whether to ignore unknown predicates.
       #
-      def initialize(root: false, loose: false)
+      def initialize(root: false, loose: false, key: nil)
         @keys = EMPTY_HASH.dup
         @required = Set.new
 
@@ -112,7 +112,7 @@ module Dry
       # @return [Hash] the JSON Schema as a hash.
       #
       def to_hash
-        result = @keys.to_hash
+        result = keys.to_hash
         result[:$schema] = "http://json-schema.org/draft-06/schema#" if root?
         result
       end
@@ -144,12 +144,12 @@ module Dry
           visit_nominal_with_key(node, opts)
         else
           if opts.key?(:array)
-            @keys.merge!(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
+            keys.update(items: { type: CLASS_TO_TYPE[type.to_s.to_sym] })
           else
-            @keys.merge!(type: CLASS_TO_TYPE[type.to_s.to_sym])
+            keys.update(type: CLASS_TO_TYPE[type.to_s.to_sym])
           end
 
-          @keys.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
+          keys.merge!(meta.slice(*ALLOWED_TYPES_META_OVERRIDES)) if meta.any?
         end
       end
 
@@ -174,7 +174,7 @@ module Dry
         end
 
         if ctx.nil?
-          @keys.merge!(definition)
+          keys.merge!(definition)
         else
           @keys[ctx] ||= {}
           @keys[ctx].merge!(definition)
@@ -244,26 +244,18 @@ module Dry
         visit(right, { left_type: left_type }.merge(opts))
       end
 
-      def visit_hash(node, opts = EMPTY_HASH)
-        _part, _meta = node
-
-        if opts.key?(:key)
-          @keys[opts[:key]] = { type: :object }
-        else
-          @keys.merge!({ type: :object })
-        end
-      end
+      def visit_hash(node, opts = EMPTY_HASH) = nil
 
       def visit_struct(node, opts = EMPTY_HASH)
         _, schema = node
 
         return visit(schema, opts) unless opts.key?(:key)
 
-        if opts.key?(:array)
-          @keys[opts[:key]] = { items: compile_type(schema) }
-        else
-          @keys[opts[:key]] = compile_type(schema)
-        end
+        @keys[opts[:key]] = if opts.key?(:array)
+                              { items: compile_type(schema) }
+                            else
+                              compile_type(schema)
+                            end
       end
 
       def visit_array(node, opts = EMPTY_HASH)
