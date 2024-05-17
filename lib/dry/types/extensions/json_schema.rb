@@ -82,7 +82,7 @@ module Dry
       # @param root [Boolean] whether this schema is the root schema.
       # @param loose [Boolean] whether to ignore unknown predicates.
       #
-      def initialize(root: false, loose: false, key: nil)
+      def initialize(root: false, loose: false)
         @keys = EMPTY_HASH.dup
         @required = Set.new
 
@@ -176,8 +176,8 @@ module Dry
         if ctx.nil?
           keys.merge!(definition)
         else
-          @keys[ctx] ||= {}
-          @keys[ctx].merge!(definition)
+          keys[ctx] ||= {}
+          keys[ctx].merge!(definition)
         end
       end
 
@@ -186,7 +186,7 @@ module Dry
 
         result = types.map { |type| compile_type(type) }
 
-        @keys[opts[:key]] = deep_merge_items(result)
+        keys.update(opts[:key] => deep_merge_items(result))
       end
 
       def visit_sum_with_key(node, opts = EMPTY_HASH)
@@ -196,11 +196,11 @@ module Dry
           .map { |type| compile_value(type, { sum: true }.merge(opts)) }
           .uniq
 
-        return @keys[opts[:key]] = result.first if result.count == 1
+        return keys[opts[:key]] = result.first if result.count == 1
 
-        return @keys[opts[:key]] = { anyOf: result } unless opts[:array]
+        return keys[opts[:key]] = { anyOf: result } unless opts[:array]
 
-        @keys[opts[:key]] = {
+        keys[opts[:key]] = {
           type: :array,
           items: { anyOf: result }
         }
