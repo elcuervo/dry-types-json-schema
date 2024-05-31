@@ -213,10 +213,7 @@ module Dry
 
         return set({ anyOf: result }) unless opts[:array]
 
-        set({
-              type: :array,
-          items: { anyOf: result }
-            })
+        set({ type: :array, items: { anyOf: result } })
       end
 
       def visit_and(node, opts = EMPTY_HASH)
